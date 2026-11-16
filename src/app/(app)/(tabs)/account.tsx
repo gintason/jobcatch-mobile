@@ -5,7 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import {
   BadgeCheck, Bell, Bike, Briefcase, CalendarCheck, ChevronRight, FileText, Globe, Headphones, LogOut, MessageSquareWarning,
-  Gift, Package, Receipt, Send, ShieldCheck, Trash2, Wallet, X, type LucideIcon,
+  Gift, Package, UserCog, Receipt, Send, ShieldCheck, Trash2, Wallet, X, type LucideIcon,
 } from "lucide-react-native";
 import { Avatar } from "@/components/jobs";
 import { api, apiError } from "@/lib/api";
@@ -24,8 +24,8 @@ export default function Account() {
   if (!user) return null;
   return (
     <Screen title="Account">
-      <Card style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-        <Avatar name={user.full_name} size={58} />
+      <Card onPress={() => router.push("/profile")} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
+        <Avatar uri={user.photo} name={user.full_name} size={58} />
         <View style={{ flex: 1, gap: 3 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
             <Text variant="h2" numberOfLines={1} style={{ flexShrink: 1 }}>{user.full_name}</Text>
@@ -36,10 +36,12 @@ export default function Account() {
             <Badge label={ROLE_LABEL[user.role] ?? user.role} tone="info" />
             {user.is_identity_verified ? <Badge label="ID verified" tone="success" /> : null}
           </View>
+          <Text variant="caption" color={colors.brand500} style={{ marginTop: 4 }}>Edit profile ›</Text>
         </View>
       </Card>
 
       <Group title="Activity" items={[
+        { icon: UserCog, label: "Edit profile", href: "/profile" },
         { icon: Wallet, label: "Wallet", href: "/wallet" },
         { icon: Send, label: "Send money", href: "/transfers" },
         { icon: Gift, label: "Invite & earn", href: "/referrals" },

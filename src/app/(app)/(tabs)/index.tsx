@@ -30,7 +30,7 @@ export default function Home() {
   return (
     <Screen onRefresh={() => { wallet.refetch(); deliveries.refetch(); jobs.refetch(); artisans.refetch(); unread.refetch(); }} refreshing={wallet.isRefetching}>
       <View style={s.header}>
-        <Pressable onPress={() => router.push("/account")} accessibilityLabel="Account"><Avatar name={user?.full_name ?? ""} size={44} /></Pressable>
+        <Pressable onPress={() => router.push("/profile")} accessibilityLabel="Edit profile"><Avatar uri={user?.photo} name={user?.full_name ?? ""} size={44} /></Pressable>
         <View style={{ flex: 1 }}>
           <Text variant="small">{greeting()},</Text>
           <Text variant="h2">{firstName(user?.full_name)} 👋</Text>

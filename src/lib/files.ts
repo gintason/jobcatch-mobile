@@ -28,3 +28,11 @@ export async function takeSelfie(): Promise<PickedFile | null> {
   const a = r.assets[0];
   return { uri: a.uri, name: a.fileName ?? "selfie.jpg", type: a.mimeType ?? "image/jpeg" };
 }
+
+/** Pick a square profile photo from the library (cropped by the system picker). */
+export async function pickProfilePhoto(): Promise<PickedFile | null> {
+  const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ["images"], allowsEditing: true, aspect: [1, 1], quality: 0.7 });
+  if (r.canceled || !r.assets?.[0]) return null;
+  const a = r.assets[0];
+  return { uri: a.uri, name: a.fileName ?? "photo.jpg", type: a.mimeType ?? "image/jpeg" };
+}

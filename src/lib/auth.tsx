@@ -11,7 +11,11 @@ export interface User {
   email: string;
   full_name: string;
   role: Role;
-  phone?: string;
+  phone?: string | null;
+  photo?: string | null;
+  has_password?: boolean;
+  date_joined?: string;
+  is_phone_verified?: boolean;
   is_email_verified: boolean;
   is_identity_verified: boolean;
   profile: unknown;
@@ -29,6 +33,10 @@ interface AuthValue {
   resendOtp: (email: string) => Promise<void>;
   switchRole: (role: Role) => Promise<void>;
   refreshUser: () => Promise<void>;
+  /** Replace the cached account (after editing the profile). */
+  setUser: (u: User) => void;
+  /** Store new tokens + account (after a password change signs other devices out). */
+  acceptSession: (d: { access: string; refresh: string; user: User }) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -84,6 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser((u) => (u ? { ...u, ...d } : u));
     },
     refreshUser: async () => { setUser(await api.get<User>("/auth/me/")); },
+    setUser: (u) => setUser(u),
+    acceptSession: async (d) => { await tokens.set(d.access, d.refresh); setUser(d.user); },
     logout: async () => {
       try { await api.post("/auth/logout/", { refresh: tokens.refresh() }); } catch { /* clear locally regardless */ }
       await tokens.clear();
