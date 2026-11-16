@@ -40,7 +40,7 @@
         {
           "backgroundColor": "#ffffff",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 200
+          "imageWidth": 240
         }
       ],
       [
@@ -65,12 +65,8 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
+    "owner": "gintason",
     "extra": {
-      "router": {
-        "asyncRoutes": {
-          "web": true
-        }
-      },
       "eas": {
         "projectId": "20ea4483-c1e7-449c-b8ad-68ceedbdc785"
       }

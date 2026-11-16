@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppState, Platform } from "react-native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
@@ -7,6 +7,7 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { focusManager, QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useFonts, PlusJakartaSans_600SemiBold, PlusJakartaSans_700Bold, PlusJakartaSans_800ExtraBold } from "@expo-google-fonts/plus-jakarta-sans";
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold } from "@expo-google-fonts/inter";
+import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { ApiError } from "@/lib/api";
 import { colors } from "@/ui/theme";
@@ -45,16 +46,21 @@ export default function RootLayout() {
 
 function RootNavigator() {
   const { user, ready } = useAuth();
-  useEffect(() => { if (ready) SplashScreen.hideAsync().catch(() => {}); }, [ready]);
-  if (!ready) return null;
+  const [splash, setSplash] = useState(true);
   return (
-    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
-      <Stack.Protected guard={!!user}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-      <Stack.Protected guard={!user}>
-        <Stack.Screen name="(auth)" />
-      </Stack.Protected>
-    </Stack>
+    <>
+      {ready ? (
+        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.bg } }}>
+          <Stack.Protected guard={!!user}>
+            <Stack.Screen name="(app)" />
+          </Stack.Protected>
+          <Stack.Protected guard={!user}>
+            <Stack.Screen name="(auth)" />
+          </Stack.Protected>
+        </Stack>
+      ) : null}
+      {/* Brand animation on top; it hides the native splash on its first frame and fades out when ready. */}
+      {splash ? <AnimatedSplash ready={ready} onDone={() => setSplash(false)} /> : null}
+    </>
   );
 }

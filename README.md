@@ -52,13 +52,17 @@ npx eas-cli@latest submit --platform android   # and/or ios
 
 ## Google sign-in on phones
 
-1. In Google Cloud Console (the same project as the web client), create OAuth client IDs:
-   - **Android:** package `com.jobcatchonline.app` plus the SHA-1 from `npx eas-cli credentials`.
-   - **iOS:** bundle ID `com.jobcatchonline.app`.
-2. Put them in `EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID` and `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID`.
-3. On Render, add both IDs to the backend's `GOOGLE_CLIENT_IDS`, comma-separated, next to the web ID.
+The app uses Google's **native** sign-in. Google issues the token for the **web** client ID,
+which the backend already accepts, so **no Render change is needed**.
 
-The Google button stays hidden on a platform until its client ID is set, so the app ships safely without it.
+- **Android** (done): Google Cloud → Clients → an **Android** client with package
+  `com.jobcatchonline.app` and the SHA-1 from `npx eas-cli@latest credentials -p android`.
+  Nothing to add to the app; Google matches the client by package name and SHA-1.
+- **Google Play**: Play re-signs the app. Add a **second** Android client with the same package
+  and the SHA-1 from Play Console → Protected with Play → Manage Play app signing.
+- **iOS** (done): an **iOS** client with bundle ID `com.jobcatchonline.app`. Its ID is built into
+  `src/lib/config.ts` and `app.config.ts`, which also add the URL scheme Google returns to.
+  iOS builds need an Apple Developer Program membership.
 
 ## Checks
 

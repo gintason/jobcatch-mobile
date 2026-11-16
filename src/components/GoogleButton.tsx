@@ -1,42 +1,81 @@
 import { useState } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
-import * as Google from "expo-auth-session/providers/google";
-import * as WebBrowser from "expo-web-browser";
+import { Platform, Pressable, StyleSheet, TurboModuleRegistry, View } from "react-native";
+import type * as GoogleSignInLib from "@react-native-google-signin/google-signin";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/lib/auth";
 import { apiError } from "@/lib/api";
 import { GOOGLE } from "@/lib/config";
 import { Text, colors, fonts, radius } from "@/ui";
 
-WebBrowser.maybeCompleteAuthSession();
-
-/** Client ID for this platform; Google sign-in is hidden until it is configured. */
-const platformId = Platform.select({ ios: GOOGLE.iosClientId, android: GOOGLE.androidClientId, default: GOOGLE.webClientId });
-
-export function GoogleButton({ onError }: { onError: (msg: string) => void }) {
-  if (!platformId) return null;
-  return <GoogleButtonInner onError={onError} />;
+/**
+ * Native "Continue with Google" (Google's recommended Android/iOS sign-in).
+ *
+ * The ID token is issued for the WEB client ID, which the backend already
+ * accepts. On Android, Google matches this app to the "Android" OAuth client
+ * in Google Cloud by its package name + SHA-1, so no Android ID is needed here.
+ * iOS needs EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID; until it's set the button is hidden there.
+ */
+/**
+ * The library's native half only exists in builds made after it was added (EAS build), not in
+ * Expo Go or older builds. Load it only when the native module is really there, so those
+ * builds simply hide the Google button instead of crashing on start.
+ */
+const lib: typeof GoogleSignInLib | null = (() => {
+  if (Platform.OS === "web" || !TurboModuleRegistry.get("RNGoogleSignin")) return null;
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    return require("@react-native-google-signin/google-signin") as typeof GoogleSignInLib;
+  } catch {
+    return null;
+  }
+})();
+const available = !!lib && (Platform.OS === "android" || (Platform.OS === "ios" && !!GOOGLE.iosClientId));
+let configured = false;
+function configure() {
+  if (configured || !lib) return;
+  lib.GoogleSignin.configure({ webClientId: GOOGLE.webClientId, iosClientId: GOOGLE.iosClientId });
+  configured = true;
 }
 
-function GoogleButtonInner({ onError }: { onError: (msg: string) => void }) {
+export function GoogleButton({ onError }: { onError: (msg: string) => void }) {
   const { loginWithGoogle } = useAuth();
   const [busy, setBusy] = useState(false);
-  const [request, , prompt] = Google.useIdTokenAuthRequest({
-    webClientId: GOOGLE.webClientId, iosClientId: GOOGLE.iosClientId, androidClientId: GOOGLE.androidClientId, selectAccount: true,
-  });
+  if (!available) return null;
 
   async function start() {
-    const res = await prompt();
-    if (res.type === "error") { onError("Google sign-in failed. Please try again."); return; }
-    if (res.type !== "success") return;                  // cancelled / dismissed
-    const idToken = res.params.id_token ?? res.authentication?.idToken;
-    if (!idToken) { onError("Google didn't return a sign-in token. Please try again."); return; }
+    if (!lib) return;
+    const { GoogleSignin, isErrorWithCode, isSuccessResponse, statusCodes } = lib;
     setBusy(true);
-    try { await loginWithGoogle(idToken); } catch (e) { onError(apiError(e, "Google sign-in failed.")); setBusy(false); }
+    try {
+      configure();
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      const res = await GoogleSignin.signIn();
+      if (!isSuccessResponse(res)) return;                 // cancelled
+      const idToken = res.data.idToken;
+      // Forget the Google session in the app so the account picker shows next time.
+      GoogleSignin.signOut().catch(() => {});
+      if (!idToken) { onError("Google didn't return a sign-in token. Please try again."); return; }
+      await loginWithGoogle(idToken);
+    } catch (e) {
+      if (isErrorWithCode(e)) {
+        if (e.code === statusCodes.SIGN_IN_CANCELLED || e.code === statusCodes.IN_PROGRESS) return;
+        if (e.code === statusCodes.PLAY_SERVICES_NOT_AVAILABLE) { onError("Google Play services is missing or out of date on this phone."); return; }
+        if (e.code === "10" || /DEVELOPER_ERROR/i.test(e.message)) {
+          // The app's package name / SHA-1 doesn't match an Android client in Google Cloud.
+          onError("Google sign-in isn't set up for this version of the app yet. Please sign in with email.");
+          return;
+        }
+        onError("Google sign-in failed. Please try again.");
+        return;
+      }
+      onError(apiError(e, "Google sign-in failed."));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <Pressable disabled={!request || busy} onPress={start} accessibilityRole="button"
+    <Pressable disabled={busy} onPress={start} accessibilityRole="button"
       style={({ pressed }) => [s.btn, (pressed || busy) && { opacity: 0.8 }]}>
       <GoogleG />
       <Text style={{ fontFamily: fonts.semibold, fontSize: 15.5, color: colors.ink }}>{busy ? "Signing in…" : "Continue with Google"}</Text>
@@ -45,6 +84,7 @@ function GoogleButtonInner({ onError }: { onError: (msg: string) => void }) {
 }
 
 export function OrDivider() {
+  if (!available) return null;
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginVertical: 2 }}>
       <View style={s.line} /><Text variant="caption">OR</Text><View style={s.line} />

@@ -13,11 +13,14 @@ export function mediaUrl(path: string | null | undefined): string {
   return `${API_ORIGIN}${path.startsWith("/") ? "" : "/"}${path}`;
 }
 
-/** Google OAuth client IDs (public). Android/iOS IDs must also be listed in the backend's GOOGLE_CLIENT_IDS. */
+/**
+ * Google OAuth client IDs (public). Native sign-in asks Google for a token for the WEB
+ * client ID (already accepted by the backend). Android needs no ID here: Google matches
+ * the "Android" client in Google Cloud by package name + SHA-1. iOS needs its own ID.
+ */
 export const GOOGLE = {
   webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? "306763553702-jalc00es33k28etpj8shsufela5486t1.apps.googleusercontent.com",
-  androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
+  iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? "306763553702-5kvmuchb5s8ee3gjgpqb3mhnqeminfac.apps.googleusercontent.com",
 };
 
 export const COMPANY = {
