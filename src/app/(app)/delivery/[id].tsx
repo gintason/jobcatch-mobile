@@ -9,6 +9,8 @@ import { openCheckout } from "@/lib/checkout";
 import { useDelivery, useDeliveryAction, usePayDelivery, type Delivery } from "@/lib/dispatch";
 import { formatDateTime, naira } from "@/lib/format";
 import { Badge, Button, Card, Loading, Notice, Screen, Text, colors, fonts, radius } from "@/ui";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { deliveryMessage } from "@/lib/support";
 
 const STEPS: { key: keyof Delivery; label: string }[] = [
   { key: "created_at", label: "Requested" }, { key: "accepted_at", label: "Rider assigned" }, { key: "picked_up_at", label: "Picked up" },
@@ -103,6 +105,7 @@ export default function DeliveryDetail() {
         </Card>
       ) : null}
       {d.status === "delivered" && d.rating ? <Notice kind="success">Thanks — you rated this delivery {d.rating}/5.</Notice> : null}
+      <WhatsAppButton message={deliveryMessage(d)} label="Problem with this delivery?" />
     </Screen>
   );
 }

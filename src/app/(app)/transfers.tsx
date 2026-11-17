@@ -11,6 +11,8 @@ import {
   useTransferHistory, useTransferOverview, type TransferOverview, type TransferRow,
 } from "@/lib/transfers";
 import { Button, Card, Chips, Empty, Input, Loading, Notice, Screen, Section, Segmented, Select, Text, colors, fonts, radius } from "@/ui";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { transferMessage } from "@/lib/support";
 
 type Tab = "bank" | "wallet";
 interface Pending { kind: Tab; to: string; name: string; amount: string; fee: number; note: string; bank_code?: string; bank_name?: string }
@@ -284,6 +286,7 @@ function ReceiptSheet({ t, onClose }: { t: TransferRow; onClose: () => void }) {
       {r.note ? <Row label="Note" value={r.note} /> : null}
       <Row label="Date" value={formatDateTime(r.created_at)} />
       <Button title="Done" onPress={onClose} />
+      {r.status !== "successful" || r.type === "bank" ? <WhatsAppButton message={transferMessage(r)} label="Need help with this transfer?" /> : null}
     </Sheet>
   );
 }

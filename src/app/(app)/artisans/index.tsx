@@ -4,7 +4,7 @@ import { router } from "expo-router";
 import { CalendarCheck, Search, Wrench } from "lucide-react-native";
 import { ArtisanCard } from "@/components/jobs";
 import { useBrowseArtisans, useCategories } from "@/lib/jobs";
-import { Button, Chips, Empty, Input, Loading, Screen, Text, colors } from "@/ui";
+import { Button, Select, Empty, Input, Loading, Screen, Text, colors } from "@/ui";
 
 export default function Artisans() {
   const [q, setQ] = useState("");
@@ -23,7 +23,7 @@ export default function Artisans() {
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 4 }}>
             <Input value={q} onChangeText={setQ} placeholder="Search a trade or name" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())} left={<Search size={18} color={colors.faint} />} />
-            <Chips value={category} onChange={setCategory} options={[{ value: "", label: "All" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
+            <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
             {list.total ? <Text variant="caption">{list.total.toLocaleString()} artisans</Text> : null}
             {list.isLoading ? <Loading rows={4} /> : null}
           </View>

@@ -17,7 +17,7 @@ import {
   useRoleProfile, useSaveArtisanVerification, useSaveRoleProfile, useSubmitArtisanVerification, useUploadArtisanDoc, useUploadPortfolio,
   type ArtisanProfile, type ArtisanVerification,
 } from "@/lib/roles";
-import { Badge, Button, Card, Empty, Input, Loading, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
+import { Badge, Button, Card, Empty, Input, Loading, MultiSelect, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
 
 type Tab = "profile" | "services" | "portfolio" | "bookings" | "messages" | "verification";
 const TABS: { id: Tab; label: string }[] = [
@@ -273,7 +273,6 @@ function DetailsForm({ app }: { app: ArtisanVerification }) {
   const [idNumber, setIdNumber] = useState("");
   const [creds, setCreds] = useState(app.trade_credentials);
   const [msg, setMsg] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const toggle = (id: string) => setSelected((x) => (x.includes(id) ? x.filter((v) => v !== id) : [...x, id]));
 
   function submit() {
     setMsg(null);
@@ -288,19 +287,8 @@ function DetailsForm({ app }: { app: ArtisanVerification }) {
   return (
     <Card style={{ gap: 12 }}>
       <Text variant="h3">1 · Your skills & ID</Text>
-      <Text variant="label">Skill categories</Text>
-      {cats.isLoading ? <Loading rows={1} /> : (
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-          {(cats.data ?? []).map((c) => {
-            const on = selected.includes(c.id);
-            return (
-              <Pressable key={c.id} onPress={() => toggle(c.id)} style={[s.tag, on && s.tagOn]} accessibilityState={{ selected: on }}>
-                <Text style={{ fontSize: 13, fontFamily: fonts.semibold, color: on ? colors.white : colors.brand800 }}>{c.name}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      <MultiSelect label="Skill categories" values={selected} onChange={setSelected} loading={cats.isLoading}
+        options={(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))} placeholder="Choose your trades" hint="Pick every trade you’re skilled in." />
       <Input label="Years of experience" value={years} onChangeText={(v) => setYears(v.replace(/\D/g, "").slice(0, 2))} keyboardType="number-pad" placeholder="e.g. 5" />
       <Select label="ID type" value={idType} onChange={setIdType} options={ID_TYPES} />
       <Input label="ID number" value={idNumber} onChangeText={setIdNumber} autoCapitalize="characters"
@@ -381,7 +369,5 @@ const s = StyleSheet.create({
   pick: { minHeight: 120, borderRadius: radius.md, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.brand200, alignItems: "center", justifyContent: "center", gap: 6, overflow: "hidden" },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
   tile: { width: "47%", flexGrow: 1, gap: 6, backgroundColor: colors.white, padding: 8, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
-  tag: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: radius.pill, backgroundColor: colors.brand50, borderWidth: 1, borderColor: colors.brand100 },
-  tagOn: { backgroundColor: colors.brand500, borderColor: colors.brand500 },
   docRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.line },
 });

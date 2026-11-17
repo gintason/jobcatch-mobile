@@ -4,7 +4,7 @@ import { router, type Href } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import {
-  BadgeCheck, Bell, Bike, Briefcase, CalendarCheck, ChevronRight, FileText, Globe, Headphones, LogOut, MessageSquareWarning,
+  BadgeCheck, Bell, Bike, Briefcase, ChevronRight, Hammer, LayoutGrid, MessageCircle, Search, FileText, Globe, Headphones, LogOut, MessageSquareWarning,
   Gift, Package, UserCog, Receipt, Send, ShieldCheck, Trash2, Wallet, X, type LucideIcon,
 } from "lucide-react-native";
 import { Avatar } from "@/components/jobs";
@@ -15,6 +15,8 @@ import { COMPANY, WEB_URL } from "@/lib/config";
 import { tokens } from "@/lib/tokens";
 import { useQueryClient } from "@tanstack/react-query";
 import { Badge, Button, Card, Input, Notice, Screen, Text, colors } from "@/ui";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { SUPPORT_WHATSAPP, generalMessage } from "@/lib/support";
 
 const ROLE_LABEL: Record<string, string> = { customer: "Customer", artisan: "Artisan", employer: "Employer", job_seeker: "Job seeker", rider: "Rider", admin: "Admin" };
 
@@ -24,6 +26,14 @@ export default function Account() {
   if (!user) return null;
   return (
     <Screen title="Account">
+      <Card onPress={() => router.push("/hub")} style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: colors.brand900, borderColor: colors.brand900 }}>
+        <LayoutGrid size={22} color={colors.white} />
+        <View style={{ flex: 1 }}>
+          <Text variant="bodyStrong" color={colors.white}>Role hub · {ROLE_LABEL[user.role] ?? user.role}</Text>
+          <Text variant="caption" color="rgba(255,255,255,0.75)">Switch between Customer, Artisan, Employer and Job Seeker</Text>
+        </View>
+        <ChevronRight size={20} color={colors.white} />
+      </Card>
       <Card onPress={() => router.push("/profile")} style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
         <Avatar uri={user.photo} name={user.full_name} size={58} />
         <View style={{ flex: 1, gap: 3 }}>
@@ -47,16 +57,18 @@ export default function Account() {
         { icon: Gift, label: "Invite & earn", href: "/referrals" },
         { icon: Receipt, label: "Bill payments", href: "/bills" },
         { icon: Package, label: "Deliveries", href: "/delivery" },
-        { icon: Briefcase, label: "Job applications", href: "/applications" },
-        { icon: FileText, label: "My CVs", href: "/cvs" },
-        { icon: CalendarCheck, label: "Artisan bookings", href: "/bookings" },
+        { icon: MessageCircle, label: "Messages", href: "/messages" },
         { icon: Bell, label: "Notifications", href: "/notifications" },
       ]} />
-      <Group title="Earn with JobCatch" items={[
+      <Group title="Dashboards" items={[
+        { icon: Search, label: "Customer — hire artisans", href: "/dashboard/customer" },
+        { icon: Hammer, label: "Artisan — offer your services", href: "/dashboard/artisan" },
+        { icon: Briefcase, label: "Employer — post jobs and hire", href: "/dashboard/employer" },
+        { icon: FileText, label: "Job Seeker — find work and apply", href: "/dashboard/seeker" },
         { icon: Bike, label: "Ride with JobCatch", href: "/rider" },
-        { icon: Briefcase, label: "Post jobs (employers)", url: `${WEB_URL}/dashboard/employer` },
-        { icon: ShieldCheck, label: "Offer your services (artisans)", url: `${WEB_URL}/dashboard/artisan` },
       ]} />
+      <WhatsAppButton message={generalMessage(user.email)} label={`WhatsApp support · ${SUPPORT_WHATSAPP.display}`}
+        hint="Airtime or data not credited, a missing token, or any other problem? Chat with our support team." />
       <Group title="Help & legal" items={[
         { icon: MessageSquareWarning, label: "Complaints", url: `${WEB_URL}/complaints` },
         { icon: Headphones, label: "Contact support", url: `${WEB_URL}/contact` },

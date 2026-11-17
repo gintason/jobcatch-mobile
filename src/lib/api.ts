@@ -86,6 +86,7 @@ export const api = {
   get: <T>(path: string, params?: Params, signal?: AbortSignal) => request<T>("GET", path, { params, signal }),
   post: <T>(path: string, body?: unknown) => request<T>("POST", path, { body: body ?? {} }),
   patch: <T>(path: string, body?: unknown) => request<T>("PATCH", path, { body }),
+  put: <T>(path: string, body?: unknown) => request<T>("PUT", path, { body }),
   delete: <T>(path: string) => request<T>("DELETE", path),
   upload: <T>(method: "POST" | "PATCH", path: string, form: FormData) => request<T>(method, path, { form }),
   /** Public endpoints that must not send a (possibly stale) token. */

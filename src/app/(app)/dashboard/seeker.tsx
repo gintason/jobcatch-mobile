@@ -17,7 +17,7 @@ import {
   startCVServicePayment, startSeekerProCheckout, useCVServiceAccess, useCVSubmissions, useJobAlerts, useSaveJobAlerts, useSeekerPro, useSubmitCVService,
   type JobAlerts,
 } from "@/lib/roles";
-import { Badge, Button, Card, Chips, Empty, Input, Loading, Notice, Screen, Text, colors, fonts, radius } from "@/ui";
+import { Badge, Button, Card, Empty, Input, Loading, MultiSelect, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
 
 type Tab = "find" | "applications" | "cvs" | "alerts" | "messages" | "cvservice";
 const IDS: Tab[] = ["find", "applications", "cvs", "alerts", "messages", "cvservice"];
@@ -58,7 +58,7 @@ function FindJobs() {
     <View style={{ gap: 12 }}>
       <Input value={q} onChangeText={setQ} placeholder="Search job title or company" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())}
         left={<Search size={18} color={colors.faint} />} />
-      <Chips value={category} onChange={setCategory} options={[{ value: "", label: "All" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
+      <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
       {jobs.isLoading ? <Loading rows={3} /> : jobs.data?.length ? jobs.data.map((j) => <JobCard key={j.id} j={j} />)
         : <Empty icon={<Search size={26} color={colors.brand500} />} title="No open jobs match" body="Try another search or category." />}
     </View>
@@ -124,21 +124,11 @@ function AlertsForm({ a }: { a: JobAlerts }) {
   const save = useSaveJobAlerts();
   const [f, setF] = useState({ whatsapp_number: a.whatsapp_number, keywords: a.keywords, categories: a.categories, is_active: a.is_active });
   const [msg, setMsg] = useState<{ kind: "success" | "error"; text: string } | null>(null);
-  const toggle = (id: string) => setF((x) => ({ ...x, categories: x.categories.includes(id) ? x.categories.filter((c) => c !== id) : [...x.categories, id].slice(0, 10) }));
   return (
     <Card style={{ gap: 12 }}>
       <Input label="WhatsApp number" value={f.whatsapp_number} onChangeText={(v) => setF({ ...f, whatsapp_number: v })} keyboardType="phone-pad" placeholder="0803 123 4567" />
-      <Text variant="label">Job categories <Text variant="caption">(none = all)</Text></Text>
-      <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
-        {(cats.data ?? []).map((c) => {
-          const on = f.categories.includes(c.id);
-          return (
-            <Pressable key={c.id} onPress={() => toggle(c.id)} style={[s.tag, on && s.tagOn]} accessibilityState={{ selected: on }}>
-              <Text style={{ fontSize: 12.5, fontFamily: fonts.semibold, color: on ? colors.white : colors.brand800 }}>{c.name}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      <MultiSelect label="Job categories" values={f.categories} onChange={(v) => setF({ ...f, categories: v })} loading={cats.isLoading} max={10}
+        options={(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))} placeholder="All categories" hint="Leave empty to get alerts for every category (up to 10)." />
       <Input label="Keywords (comma-separated, optional)" value={f.keywords} onChangeText={(v) => setF({ ...f, keywords: v })} placeholder="e.g. accountant, remote, Lagos" />
       <Toggle label="Send me job alerts" value={f.is_active} onChange={(v) => setF({ ...f, is_active: v })} />
       {msg ? <Notice kind={msg.kind}>{msg.text}</Notice> : null}
@@ -220,7 +210,5 @@ function CVServicePaid() {
 
 const s = StyleSheet.create({
   promo: { borderRadius: radius.lg, padding: 18, gap: 8 },
-  tag: { paddingHorizontal: 11, paddingVertical: 7, borderRadius: radius.pill, backgroundColor: colors.brand50, borderWidth: 1, borderColor: colors.brand100 },
-  tagOn: { backgroundColor: colors.brand500, borderColor: colors.brand500 },
   cvIcon: { width: 46, height: 46, borderRadius: 14, backgroundColor: colors.brand50, alignItems: "center", justifyContent: "center" },
 });

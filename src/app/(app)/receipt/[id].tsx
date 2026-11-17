@@ -12,6 +12,8 @@ import { API_URL } from "@/lib/config";
 import { formatDateTime, naira } from "@/lib/format";
 import { tokens } from "@/lib/tokens";
 import { Badge, Button, Card, Divider, Loading, Notice, Screen, Text, colors, fonts, radius } from "@/ui";
+import { WhatsAppButton } from "@/components/WhatsAppButton";
+import { billMessage } from "@/lib/support";
 
 export default function BillReceipt() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -95,6 +97,7 @@ export default function BillReceipt() {
         <Button title="Check status now" kind="secondary" icon={<RefreshCw size={16} color={colors.brand600} />} loading={requery.isPending}
           onPress={() => { setError(""); requery.mutate(o.id, { onError: (e) => setError(apiError(e)) }); }} />
       ) : null}
+      <WhatsAppButton message={billMessage(o)} hint="Airtime or data not received? Token missing? Message us on WhatsApp — your receipt details are added for you." />
       <Button title="Back to bills" kind="ghost" onPress={() => router.replace("/bills")} />
     </Screen>
   );
