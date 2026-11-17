@@ -54,14 +54,6 @@ export default function Home() {
 
       <WalletCard />
 
-      <Section title="Your dashboards" action={<Text variant="label" color={colors.brand500} onPress={() => router.push("/hub")}>Role hub</Text>}>
-        <Text variant="small" style={{ marginTop: -4 }}>One account, every side of JobCatch. Pick how you want to continue — you can switch any time.</Text>
-        {roleError ? <Notice kind="error">{roleError}</Notice> : null}
-        <View style={{ gap: 10 }}>
-          {ROLES.map((r) => <RoleCard key={r.key} r={r} active={user?.role === r.key} busy={busy} onPress={() => openRole(r)} compact />)}
-        </View>
-      </Section>
-
       {active ? (
         <Pressable onPress={() => router.push(`/delivery/${active.id}`)} style={[s.active, shadow.card]}>
           <View style={s.activeIcon}><Package size={20} color={colors.white} /></View>
@@ -90,6 +82,14 @@ export default function Home() {
         </View>
         <ChevronRight size={20} color={colors.faint} />
       </Pressable>
+
+      <Section title="Your dashboards" action={<Text variant="label" color={colors.brand500} onPress={() => router.push("/hub")}>Role hub</Text>}>
+        <Text variant="small" style={{ marginTop: -4 }}>One account, every side of JobCatch. Pick how you want to continue — you can switch any time.</Text>
+        {roleError ? <Notice kind="error">{roleError}</Notice> : null}
+        <View style={{ gap: 10 }}>
+          {ROLES.map((r) => <RoleCard key={r.key} r={r} active={user?.role === r.key} busy={busy} onPress={() => openRole(r)} compact />)}
+        </View>
+      </Section>
 
       {jobs.data?.length ? (
         <Section title="Featured jobs" action={<Text variant="label" color={colors.brand500} onPress={() => router.push("/jobs")}>All jobs</Text>}>
