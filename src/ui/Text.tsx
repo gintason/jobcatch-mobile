@@ -1,4 +1,4 @@
-import { Text as RNText, type TextProps, type TextStyle } from "react-native";
+import { StyleSheet, Text as RNText, type TextProps, type TextStyle } from "react-native";
 import { colors, fonts } from "./theme";
 
 type Variant = "hero" | "title" | "h2" | "h3" | "body" | "bodyStrong" | "small" | "caption" | "label" | "mono";
@@ -16,5 +16,10 @@ const V: Record<Variant, TextStyle> = {
 };
 
 export function Text({ variant = "body", color, center, style, ...rest }: TextProps & { variant?: Variant; color?: string; center?: boolean }) {
-  return <RNText {...rest} style={[V[variant], color ? { color } : null, center ? { textAlign: "center" } : null, style]} />;
+  // If a screen makes the text bigger (fontSize) without giving a lineHeight, the variant's
+  // smaller lineHeight would clip the tops of the letters on Android — so scale it to match.
+  const own = StyleSheet.flatten(style) as TextStyle | undefined;
+  const fit = own?.fontSize && !own.lineHeight && (V[variant].lineHeight ?? 0) < own.fontSize * 1.25
+    ? { lineHeight: Math.round(own.fontSize * 1.3) } : null;
+  return <RNText {...rest} style={[V[variant], color ? { color } : null, center ? { textAlign: "center" } : null, style, fit]} />;
 }
