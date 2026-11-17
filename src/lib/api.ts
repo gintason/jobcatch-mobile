@@ -49,7 +49,9 @@ function buildUrl(path: string, params?: Params) {
 }
 
 async function send(method: string, path: string, opts: Options, retried = false): Promise<Response> {
-  const headers: Record<string, string> = { Accept: "application/json" };
+  // X-JobCatch-Client tells the backend this is the app, so payment gateways
+  // send the payer back into the app (not the website) after checkout.
+  const headers: Record<string, string> = { Accept: "application/json", "X-JobCatch-Client": "mobile" };
   const access = tokens.access();
   if (opts.auth !== false && access) headers.Authorization = `Bearer ${access}`;
   let body: BodyInit | undefined;

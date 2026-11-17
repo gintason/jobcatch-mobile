@@ -19,7 +19,7 @@ export default function WalletScreen() {
   function topUp() {
     setError("");
     top.mutate(amount, {
-      onSuccess: async (r) => { await openCheckout(r.authorization_url, r.reference); wallet.refetch(); },
+      onSuccess: async (r) => { await openCheckout(r.authorization_url, r.reference, { home: true }); },
       onError: (e) => setError(apiError(e, "We couldn't start the top-up.")),
     });
   }
