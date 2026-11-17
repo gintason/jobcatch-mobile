@@ -1,15 +1,18 @@
+import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 import { router } from "expo-router";
 import { LinearGradient } from "expo-linear-gradient";
 import { Bell, Briefcase, ChevronRight, Gift, Package, Wrench } from "lucide-react-native";
 import { BILL_SERVICES, ServiceGrid, WalletCard } from "@/components/bills";
 import { Avatar, ArtisanCard, JobCard } from "@/components/jobs";
+import { ROLES, RoleCard, type RoleKey } from "@/components/RoleCards";
+import { apiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
 import { useCatalogue, useWallet } from "@/lib/billing";
 import { ACTIVE, useMyDeliveries } from "@/lib/dispatch";
 import { firstName } from "@/lib/format";
 import { useFeaturedArtisans, useFeaturedJobs, useUnreadCount } from "@/lib/jobs";
-import { Screen, Section, Text, colors, fonts, radius, shadow } from "@/ui";
+import { Notice, Screen, Section, Text, colors, fonts, radius, shadow } from "@/ui";
 
 function greeting() {
   const h = new Date().getHours();
@@ -17,7 +20,15 @@ function greeting() {
 }
 
 export default function Home() {
-  const { user } = useAuth();
+  const { user, switchRole } = useAuth();
+  const [busy, setBusy] = useState<RoleKey | null>(null);
+  const [roleError, setRoleError] = useState("");
+  async function openRole(r: (typeof ROLES)[number]) {
+    setRoleError(""); setBusy(r.key);
+    try { await switchRole(r.key); router.push(r.href); }
+    catch (e) { setRoleError(apiError(e, "Could not open that dashboard. Please try again.")); }
+    finally { setBusy(null); }
+  }
   const catalogue = useCatalogue();
   const wallet = useWallet();
   const unread = useUnreadCount();
@@ -42,6 +53,14 @@ export default function Home() {
       </View>
 
       <WalletCard />
+
+      <Section title="Your dashboards" action={<Text variant="label" color={colors.brand500} onPress={() => router.push("/hub")}>Role hub</Text>}>
+        <Text variant="small" style={{ marginTop: -4 }}>One account, every side of JobCatch. Pick how you want to continue — you can switch any time.</Text>
+        {roleError ? <Notice kind="error">{roleError}</Notice> : null}
+        <View style={{ gap: 10 }}>
+          {ROLES.map((r) => <RoleCard key={r.key} r={r} active={user?.role === r.key} busy={busy} onPress={() => openRole(r)} compact />)}
+        </View>
+      </Section>
 
       {active ? (
         <Pressable onPress={() => router.push(`/delivery/${active.id}`)} style={[s.active, shadow.card]}>

@@ -87,7 +87,7 @@ export function useArtisan(id?: string) {
 // ---------------------------------------------------------------- bookings (customer ↔ artisan)
 export interface Booking {
   id: string; status: "pending" | "accepted" | "in_progress" | "completed" | "cancelled"; service: string; service_title: string;
-  customer_name: string; artisan_name: string; scheduled_for: string; address: string; agreed_price: string; notes: string;
+  customer_name: string; artisan_name: string; customer_user_id?: string; artisan_user_id?: string; scheduled_for: string; address: string; agreed_price: string; notes: string;
   has_review: boolean; created_at: string;
 }
 export function useCreateBooking() {

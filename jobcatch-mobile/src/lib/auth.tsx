@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useIsFocused } from "expo-router";
 import { api, setSessionExpiredHandler } from "./api";
 import { referralDraft } from "./referrals";
 import { tokens } from "./tokens";
@@ -20,6 +21,8 @@ export interface User {
   is_identity_verified: boolean;
   profile: unknown;
 }
+
+const ROLE_SCOPED = ["bookings", "my-profile", "my-applications", "employer-applications", "my-cvs", "conversations", "messages"];
 
 interface AuthResponse { access: string; refresh: string; user: User }
 
@@ -89,6 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     resendOtp: async (email) => { await api.post("/auth/resend-otp/", { email: email.trim(), purpose: "email_verify" }); },
     switchRole: async (role) => {
       const d = await api.post<Partial<User>>("/auth/switch-role/", { role });
+      // Several endpoints answer for the *active* role — drop their cached data
+      // so one role's bookings/applications never show under another.
+      qc.removeQueries({ predicate: (q) => ROLE_SCOPED.includes(String(q.queryKey[0])) });
       setUser((u) => (u ? { ...u, ...d } : u));
     },
     refreshUser: async () => { setUser(await api.get<User>("/auth/me/")); },
@@ -113,9 +119,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useEnsureRole(role: Role) {
   const { user, switchRole } = useAuth();
   const [failed, setFailed] = useState(false);
+  const focused = useIsFocused();
   const ok = user?.role === role || user?.role === "admin";
   useEffect(() => {
-    if (user && !ok && !failed) switchRole(role).catch(() => setFailed(true));
-  }, [user, ok, failed, role, switchRole]);
+    // Only the screen in front may switch roles; a dashboard further down the
+    // stack must not switch it back when the user picks another role.
+    if (focused && user && !ok && !failed) switchRole(role).catch(() => setFailed(true));
+  }, [focused, user, ok, failed, role, switchRole]);
   return ok;
 }
