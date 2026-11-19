@@ -121,12 +121,12 @@ export interface EmployerKYC {
   checks: Record<"cac" | "tin" | "nin", { status: "passed" | "failed" | "error" | "skipped"; message: string }>;
   documents: { id: string; doc_type: KYCDocType; doc_type_label: string; original_name: string; status: "pending" | "accepted" | "rejected"; review_note: string; created_at: string }[];
   requirements: { details_complete: boolean; missing_fields: string[]; email_verified: boolean; phone_verified: boolean; documents_complete: boolean; missing_documents: KYCDocType[] };
-  can_submit: boolean; submitted_at: string | null; reviewed_at: string | null; rejection_reason: string;
+  can_submit: boolean; fee: string; fee_paid: boolean; fee_required: boolean; submitted_at: string | null; reviewed_at: string | null; rejection_reason: string;
 }
 export type KYCPatch = Partial<Pick<EmployerKYC, "registered_name" | "company_type" | "cac_number" | "tin" | "director_name" | "business_address" | "state" | "contact_email" | "contact_phone">> & { director_nin?: string };
 
 const KYC = ["employer-kyc"];
-function useKycMutation<V>(fn: (v: V) => Promise<unknown>) {
+function useKycMutation<V, R = unknown>(fn: (v: V) => Promise<R>) {
   const qc = useQueryClient();
   return useMutation({ mutationFn: fn, onSuccess: () => { qc.invalidateQueries({ queryKey: KYC }); qc.invalidateQueries({ queryKey: ["my-profile"] }); } });
 }
@@ -143,7 +143,7 @@ export const useUploadKYCDoc = () => useKycMutation(({ doc_type, file }: { doc_t
   return api.upload("POST", "/kyc/employer/documents/", fd);
 });
 export const useDeleteKYCDoc = () => useKycMutation((id: string) => api.delete(`/kyc/employer/documents/${id}/`));
-export const useSubmitKYC = () => useKycMutation(() => api.post("/kyc/employer/submit/", {}));
+export const useSubmitKYC = () => useKycMutation(() => api.post<EmployerKYC & { authorization_url: string | null; reference: string | null }>("/kyc/employer/submit/", {}));
 
 // ================================================================ employer jobs + applicants
 export type ListingStatus = "draft" | "active" | "expired" | "closed";

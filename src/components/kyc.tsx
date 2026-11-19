@@ -8,7 +8,8 @@ import { BadgeCheck, CheckCircle2, Circle, FileText, Mail, Phone, Trash2 } from 
 import { FilePick, KV, confirm } from "@/components/dashboard";
 import { apiError, type PickedFile } from "@/lib/api";
 import { pickDocument } from "@/lib/files";
-import { formatDate } from "@/lib/format";
+import { openCheckout } from "@/lib/checkout";
+import { formatDate, naira } from "@/lib/format";
 import {
   useDeleteKYCDoc, useEmployerKYC, useSaveKYC, useSendKYCOtp, useSubmitKYC, useUploadKYCDoc, useVerifyKYCOtp,
   type EmployerKYC, type KYCDocType,
@@ -82,6 +83,7 @@ function StatusCard({ kyc }: { kyc: EmployerKYC }) {
       {kyc.status === "rejected" && kyc.rejection_reason ? <Notice kind="error">Not approved: {kyc.rejection_reason} Update the details below and resubmit.</Notice> : null}
       {([
         ["Business details", r.details_complete], ["Email confirmed", r.email_verified], ["Phone confirmed", r.phone_verified], ["Documents uploaded", r.documents_complete],
+        [`Verification fee (${naira(kyc.fee)})`, kyc.fee_paid || !kyc.fee_required],
       ] as const).map(([label, done]) => (
         <View key={label} style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           {done ? <CheckCircle2 size={17} color={colors.success} /> : <Circle size={17} color={colors.faint} />}
@@ -216,17 +218,30 @@ function Documents({ kyc }: { kyc: EmployerKYC }) {
 
 function Submit({ kyc }: { kyc: EmployerKYC }) {
   const submit = useSubmitKYC();
+  const q = useEmployerKYC();
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
+  const pay = kyc.fee_required;
+  function go() {
+    setError("");
+    submit.mutate(undefined, {
+      onSuccess: async (d) => {
+        if (d.authorization_url) { await openCheckout(d.authorization_url, d.reference); q.refetch(); }
+        else setDone(true);
+      },
+      onError: (e) => setError(apiError(e, "Could not submit.")),
+    });
+  }
   return (
     <Card style={{ gap: 10 }}>
-      <Text variant="h3">4 · Submit for review</Text>
-      <Text variant="small">Our team checks your details and documents, usually within 1–2 business days.</Text>
+      <Text variant="h3">4 · {pay ? "Pay & submit for review" : "Submit for review"}</Text>
+      <Text variant="small">We run automated checks on your CAC, TIN and director’s NIN, then our team reviews your documents — usually within 1–2 business days.</Text>
+      {pay ? <Text variant="small">One-off verification fee: <Text variant="bodyStrong" style={{ fontSize: 14 }}>{naira(kyc.fee)}</Text>. You’ll pay securely, then your application goes straight to review.</Text>
+        : kyc.fee_paid ? <Text variant="caption">Your verification fee is already paid — submitting again is free.</Text> : null}
       {!kyc.can_submit ? <Notice kind="warning">Complete steps 1–3 first{kyc.requirements.missing_fields.length ? ` (missing: ${kyc.requirements.missing_fields.join(", ").replace(/_/g, " ")})` : ""}.</Notice> : null}
       {error ? <Notice kind="error">{error}</Notice> : null}
       {done ? <Notice kind="success">Submitted. We’ll notify you when the review is done.</Notice> : null}
-      <Button title="Submit for verification" disabled={!kyc.can_submit} loading={submit.isPending}
-        onPress={() => { setError(""); submit.mutate(undefined, { onSuccess: () => setDone(true), onError: (e) => setError(apiError(e, "Could not submit.")) }); }} />
+      <Button title={pay ? `Pay ${naira(kyc.fee)} & submit` : "Submit for verification"} disabled={!kyc.can_submit} loading={submit.isPending} onPress={go} />
     </Card>
   );
 }
