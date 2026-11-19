@@ -5,6 +5,7 @@ import { Briefcase, FileText, Search, Wrench } from "lucide-react-native";
 import { JobCard } from "@/components/jobs";
 import { useCategories, usePublicJobs } from "@/lib/jobs";
 import { Select, Empty, Input, Loading, Screen, Text, colors, fonts, radius } from "@/ui";
+import { ReferralNotice, TELL_EMPLOYER } from "@/components/ReferralNotice";
 
 export default function JobsTab() {
   const [q, setQ] = useState("");
@@ -23,6 +24,7 @@ export default function JobsTab() {
             <Input value={q} onChangeText={setQ} placeholder="Search job title or company" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())}
               left={<Search size={18} color={colors.faint} />} />
             <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
+            <ReferralNotice message={TELL_EMPLOYER} />
             <View style={{ flexDirection: "row", gap: 10 }}>
               <Shortcut icon={<Briefcase size={16} color={colors.brand600} />} label="My applications" onPress={() => router.push("/applications")} />
               <Shortcut icon={<FileText size={16} color={colors.brand600} />} label="My CVs" onPress={() => router.push("/cvs")} />

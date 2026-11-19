@@ -13,6 +13,7 @@ import type { LatLng } from "@/lib/dispatch";
 import { formatDate, naira } from "@/lib/format";
 import { useArtisan, useCreateBooking, type ArtisanDetail } from "@/lib/jobs";
 import { Badge, Button, Card, Chips, Input, Loading, Notice, Screen, Section, Text, colors, fonts, radius } from "@/ui";
+import { ReferralNotice, TELL_ARTISAN } from "@/components/ReferralNotice";
 
 export default function ArtisanProfile() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -38,6 +39,7 @@ export default function ArtisanProfile() {
           {a.is_featured ? <Badge label="Featured" tone="warning" /> : null}
         </View>
       </Card>
+      <ReferralNotice message={TELL_ARTISAN} />
       {a.bio ? <Card style={{ gap: 6 }}><Text variant="h3">About</Text><Text>{a.bio}</Text></Card> : null}
       <Section title="Services">
         {a.services.map((s) => (

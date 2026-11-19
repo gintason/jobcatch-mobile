@@ -10,6 +10,7 @@ import { openLink } from "@/lib/checkout";
 import { formatDate } from "@/lib/format";
 import { useApplyToJob, useMyApplications, useMyCVs, usePublicJob } from "@/lib/jobs";
 import { Badge, Button, Card, Input, Loading, Notice, Screen, Select, Text, colors } from "@/ui";
+import { ReferralNotice, TELL_EMPLOYER } from "@/components/ReferralNotice";
 
 export default function JobDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,6 +42,7 @@ export default function JobDetail() {
         <Text variant="caption">Posted {formatDate(j.posted_at || j.created_at)}{j.expires_at ? ` · closes ${formatDate(j.expires_at)}` : ""}</Text>
         {j.employer_website ? <Text variant="small" color={colors.brand500} onPress={() => openLink(j.employer_website!)}>{j.employer_website}</Text> : null}
       </Card>
+      <ReferralNotice message={TELL_EMPLOYER} />
       <Card style={{ gap: 8 }}>
         <Text variant="h3">About the role</Text>
         <Text>{j.description}</Text>

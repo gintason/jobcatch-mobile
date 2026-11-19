@@ -18,6 +18,7 @@ import {
   type JobAlerts,
 } from "@/lib/roles";
 import { Badge, Button, Card, Empty, Input, Loading, MultiSelect, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
+import { ReferralNotice, TELL_EMPLOYER } from "@/components/ReferralNotice";
 
 type Tab = "find" | "applications" | "cvs" | "alerts" | "messages" | "cvservice";
 const IDS: Tab[] = ["find", "applications", "cvs", "alerts", "messages", "cvservice"];
@@ -59,6 +60,7 @@ function FindJobs() {
       <Input value={q} onChangeText={setQ} placeholder="Search job title or company" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())}
         left={<Search size={18} color={colors.faint} />} />
       <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
+      <ReferralNotice message={TELL_EMPLOYER} />
       {jobs.isLoading ? <Loading rows={3} /> : jobs.data?.length ? jobs.data.map((j) => <JobCard key={j.id} j={j} />)
         : <Empty icon={<Search size={26} color={colors.brand500} />} title="No open jobs match" body="Try another search or category." />}
     </View>
