@@ -42,3 +42,7 @@ example
 /ios
 /android
 .env
+
+# Google Play upload key (service account) — never commit
+google-play-service-account.json
+*.keystore

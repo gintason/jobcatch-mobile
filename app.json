@@ -24,7 +24,8 @@
       },
       "predictiveBackGestureEnabled": false,
       "blockedPermissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ]
     },
     "web": {
@@ -70,6 +71,7 @@
       "eas": {
         "projectId": "20ea4483-c1e7-449c-b8ad-68ceedbdc785"
       }
-    }
+    },
+    "description": "JobCatch — pay bills, send packages, hire trusted artisans and find verified jobs in Nigeria."
   }
 }
