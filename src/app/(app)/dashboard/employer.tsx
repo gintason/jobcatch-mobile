@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Briefcase, ChevronRight, FileText, Receipt, ShieldCheck, Users } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { Briefcase, ChevronRight, FileText, Receipt, ShieldCheck, Ticket, Users, X } from "lucide-react-native";
 import { ConversationList, DashTabs, RoleGate, SwitchRole, Toggle } from "@/components/dashboard";
 import { ApplicantCard, LISTING_LABEL, PackagePicker, listingTone } from "@/components/employer";
 import { salary } from "@/components/jobs";
@@ -16,7 +17,7 @@ import {
   useCreateJob, useEmployerApplications, useListingCredits, useMyJobs, usePayments, useReferredCVs, useRoleProfile, useSaveRoleProfile,
   type EmployerJob, type EmployerProfile,
 } from "@/lib/roles";
-import { Badge, Button, Card, Empty, Input, Loading, Notice, Screen, Select, Text, colors, fonts } from "@/ui";
+import { Badge, Button, Card, Empty, Input, Loading, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
 
 type Tab = "company" | "verification" | "post" | "jobs" | "applications" | "referred" | "billing" | "messages";
 const IDS: Tab[] = ["company", "verification", "post", "jobs", "applications", "referred", "billing", "messages"];
@@ -28,15 +29,19 @@ export default function EmployerDashboard() {
   const ready = useEnsureRole("employer");
   const profile = useRoleProfile<EmployerProfile>("employer", ready);
   const jobs = useMyJobs(ready);
+  const [hideBanner, setHideBanner] = useState(false);
+  // Same tab order as the web dashboard.
   const tabs: { id: Tab; label: string }[] = [
-    { id: "jobs", label: "My jobs" }, { id: "post", label: "Post a job" }, { id: "applications", label: "Applications" },
     { id: "company", label: "Company profile" }, { id: "verification", label: profile.data?.is_cac_verified ? "Verified ✓" : "Verification" },
+    { id: "post", label: "Post a job" }, { id: "jobs", label: "My jobs" }, { id: "applications", label: "Applications" },
     { id: "referred", label: "Referred CVs" }, { id: "billing", label: "Billing & credits" }, { id: "messages", label: "Messages" },
   ];
+  const showBanner = ready && profile.data && !profile.data.is_cac_verified && !hideBanner && tab !== "verification";
   return (
     <Screen back title="Employer" subtitle={profile.data?.company_name || "Post jobs and hire"} right={<SwitchRole />}
       onRefresh={() => { profile.refetch(); jobs.refetch(); }} refreshing={profile.isRefetching || jobs.isRefetching}>
       <DashTabs value={tab} onChange={setTab} tabs={tabs} />
+      {showBanner ? <VerifyBanner onStart={() => setTab("verification")} onClose={() => setHideBanner(true)} /> : null}
       <RoleGate ready={ready} role="employer">
         {tab === "company" ? (profile.data ? <CompanyProfile p={profile.data} /> : <Loading />) : null}
         {tab === "verification" ? <EmployerVerification /> : null}
@@ -48,6 +53,23 @@ export default function EmployerDashboard() {
         {tab === "messages" ? <ConversationList /> : null}
       </RoleGate>
     </Screen>
+  );
+}
+
+/** Same prompt as the web: unverified employers can't post jobs yet. */
+function VerifyBanner({ onStart, onClose }: { onStart: () => void; onClose: () => void }) {
+  return (
+    <LinearGradient colors={[colors.brand900, colors.brand600]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ borderRadius: radius.lg, padding: 16, gap: 10 }}>
+      <View style={{ flexDirection: "row", alignItems: "flex-start", gap: 10 }}>
+        <ShieldCheck size={22} color={colors.white} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={{ color: colors.white, fontFamily: fonts.displayBold, fontSize: 15.5 }}>Verify your business to post jobs</Text>
+          <Text style={{ color: "rgba(255,255,255,0.82)", fontSize: 13, lineHeight: 18 }}>Confirm your contact details, CAC, TIN and director — it takes a few minutes.</Text>
+        </View>
+        <Pressable onPress={onClose} hitSlop={10} accessibilityLabel="Dismiss"><X size={18} color={colors.white} /></Pressable>
+      </View>
+      <Button title="Start verification" kind="light" size="md" onPress={onStart} />
+    </LinearGradient>
   );
 }
 
@@ -201,18 +223,21 @@ function Billing() {
     <View style={{ gap: 14 }}>
       <Card style={{ gap: 6 }}>
         <Text variant="small">Listing credits available</Text>
-        <Text style={{ fontFamily: fonts.display, fontSize: 32, color: colors.brand900 }}>{credits.isLoading ? "…" : credits.data?.total_credits ?? 0}</Text>
+        <Text style={{ fontFamily: fonts.display, fontSize: 34, color: colors.brand900 }}>{credits.isLoading ? "…" : credits.data?.total_credits ?? 0}</Text>
         {credits.data?.featured_credits ? <Text variant="caption">{credits.data.featured_credits} featured</Text> : null}
-        <Text variant="label" style={{ marginTop: 6 }}>Active packages</Text>
+        <Button title={buying ? "Hide packages" : "Buy listing credits"} size="md" style={{ marginTop: 6 }}
+          icon={<Ticket size={17} color={colors.white} />} onPress={() => setBuying((b) => !b)} />
+      </Card>
+      <Card style={{ gap: 6 }}>
+        <Text variant="h3">Active packages</Text>
         {credits.data?.active.length ? credits.data.active.map((p) => (
           <View key={p.id} style={{ flexDirection: "row", justifyContent: "space-between", gap: 10, paddingVertical: 4 }}>
-            <Text variant="small" style={{ flex: 1 }}>{p.package_name}</Text>
-            <Text variant="caption">{p.credits_remaining}/{p.credits_total} left{p.expires_at ? ` · until ${formatDate(p.expires_at)}` : ""}</Text>
+            <Text variant="bodyStrong" style={{ flex: 1, fontSize: 14 }}>{p.package_name}</Text>
+            <Text variant="caption">{p.credits_remaining} left{p.expires_at ? ` · use by ${formatDate(p.expires_at)}` : ""}</Text>
           </View>
-        )) : <Text variant="caption">None yet.</Text>}
-        {!buying ? <Button title="Buy listing credits" kind="secondary" size="md" style={{ marginTop: 6 }} onPress={() => setBuying(true)} /> : null}
+        )) : <Text variant="small">None yet.</Text>}
       </Card>
-      {buying ? <PackagePicker onDone={() => credits.refetch()} /> : null}
+      {buying ? <Card><PackagePicker onDone={() => credits.refetch()} /></Card> : null}
       <Card style={{ gap: 4 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
           <Receipt size={18} color={colors.brand500} /><Text variant="h3">Payments & invoices</Text>
