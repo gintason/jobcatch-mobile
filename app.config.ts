@@ -9,7 +9,7 @@ const IOS_CLIENT_ID = "306763553702-5kvmuchb5s8ee3gjgpqb3mhnqeminfac.apps.google
  */
 export default ({ config }: ConfigContext): ExpoConfig => {
   const iosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || IOS_CLIENT_ID;
-  const plugins = [...(config.plugins ?? [])];
+  const plugins = [...(config.plugins ?? []), "./plugins/withOptionalScreenFeatures"];
   if (iosClientId) {
     plugins.push(["@react-native-google-signin/google-signin", { iosUrlScheme: iosClientId.split(".").reverse().join(".") }]);
   }
