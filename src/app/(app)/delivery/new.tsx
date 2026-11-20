@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Pressable, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Navigation, Package, UtensilsCrossed } from "lucide-react-native";
+import { Check, Navigation, Package, UtensilsCrossed } from "lucide-react-native";
 import { AddressField, VEHICLE_ICON } from "@/components/delivery";
 import { useAuth } from "@/lib/auth";
 import { apiError } from "@/lib/api";
@@ -20,20 +20,22 @@ export default function NewDelivery() {
   const [dropoff, setDropoff] = useState<LatLng | null>(null);
   const [f, setF] = useState({
     pickup_address: "", pickup_contact_name: "", pickup_contact_phone: "", dropoff_address: "",
-    recipient_name: user?.full_name ?? "", recipient_phone: user?.phone ?? "", item_description: "", errand_details: "", errand_budget: "", notes: "",
+    recipient_name: user?.full_name ?? "", recipient_phone: user?.phone ?? "", item_description: "", errand_details: "", notes: "",
   });
+  const [orderPaid, setOrderPaid] = useState(false);
   const [error, setError] = useState("");
   const quote = useQuote(pickup, dropoff, vehicle, kind);
   const set = (k: keyof typeof f) => (v: string) => setF((p) => ({ ...p, [k]: v }));
   const errand = kind === "errand";
-  const ready = !!quote.data && f.pickup_address && f.dropoff_address && f.recipient_name && f.recipient_phone && (errand ? f.errand_details.trim() : f.item_description.trim());
+  const ready = !!quote.data && f.pickup_address && f.dropoff_address && f.recipient_name && f.recipient_phone && f.item_description.trim()
+    && (!errand || (f.pickup_contact_name.trim() && f.pickup_contact_phone.trim() && orderPaid));
 
   function submit() {
     if (!pickup || !dropoff) { setError("Set both the pickup and drop-off locations."); return; }
     setError("");
     book.mutate({
       kind, vehicle_type: vehicle, pickup_lat: pickup.lat, pickup_lng: pickup.lng, dropoff_lat: dropoff.lat, dropoff_lng: dropoff.lng,
-      ...f, item_description: f.item_description || (errand ? "Errand / food order" : ""), errand_budget: errand && f.errand_budget ? f.errand_budget : undefined,
+      ...f, order_paid: errand ? orderPaid : undefined,
     }, {
       onSuccess: (d) => router.replace(`/delivery/${d.id}`),
       onError: (e) => setError(apiError(e, "We couldn't book this delivery.")),
@@ -41,7 +43,7 @@ export default function NewDelivery() {
   }
 
   return (
-    <Screen back title={errand ? "Food & errands" : "Send a package"}
+    <Screen back title={errand ? "Food & essentials pickup" : "Send a package"}
       footer={
         <View style={{ gap: 8 }}>
           {quote.data ? (
@@ -53,7 +55,7 @@ export default function NewDelivery() {
           <Button title={quote.data ? "Find a rider" : quote.isFetching ? "Getting price…" : "Set both addresses to see the price"} onPress={submit} loading={book.isPending} disabled={!ready} />
         </View>
       }>
-      <Segmented value={kind} onChange={setKind} options={[{ value: "package", label: "Send a package" }, { value: "errand", label: "Food & errands" }]} />
+      <Segmented value={kind} onChange={setKind} options={[{ value: "package", label: "Send a package" }, { value: "errand", label: "Food & essentials" }]} />
 
       <View style={{ gap: 8 }}>
         <Text variant="label">Vehicle</Text>
@@ -76,15 +78,13 @@ export default function NewDelivery() {
       </View>
 
       <Card style={{ gap: 14 }}>
-        <Row icon={errand ? <UtensilsCrossed size={16} color={colors.brand500} /> : <Package size={16} color={colors.brand500} />} title={errand ? "Where should the rider buy from?" : "Pickup"} />
-        <AddressField label={errand ? "Shop / restaurant address" : "Pickup address"} placeholder={errand ? "e.g. Chicken Republic, Admiralty Way, Lekki" : "e.g. 12 Allen Avenue, Ikeja"}
+        <Row icon={errand ? <UtensilsCrossed size={16} color={colors.brand500} /> : <Package size={16} color={colors.brand500} />} title={errand ? "Collect from (your vendor)" : "Pickup"} />
+        <AddressField label={errand ? "Vendor’s address" : "Pickup address"} placeholder={errand ? "e.g. Chicken Republic, Admiralty Way, Lekki" : "e.g. 12 Allen Avenue, Ikeja"}
           value={f.pickup_address} onChange={set("pickup_address")} point={pickup} onPoint={setPickup} />
-        {!errand ? (
-          <View style={{ flexDirection: "row", gap: 10 }}>
-            <View style={{ flex: 1 }}><Input label="Contact (optional)" value={f.pickup_contact_name} onChangeText={set("pickup_contact_name")} /></View>
-            <View style={{ flex: 1 }}><Input label="Their phone" value={f.pickup_contact_phone} onChangeText={set("pickup_contact_phone")} keyboardType="phone-pad" /></View>
-          </View>
-        ) : null}
+        <View style={{ flexDirection: "row", gap: 10 }}>
+          <View style={{ flex: 1 }}><Input label={errand ? "Vendor’s name" : "Contact (optional)"} value={f.pickup_contact_name} onChangeText={set("pickup_contact_name")} placeholder={errand ? "e.g. Mama Put Kitchen" : undefined} /></View>
+          <View style={{ flex: 1 }}><Input label={errand ? "Vendor’s phone" : "Their phone"} value={f.pickup_contact_phone} onChangeText={set("pickup_contact_phone")} keyboardType="phone-pad" /></View>
+        </View>
       </Card>
 
       <Card style={{ gap: 14 }}>
@@ -97,9 +97,15 @@ export default function NewDelivery() {
       <Card style={{ gap: 14 }}>
         {errand ? (
           <>
-            <Input label="What should the rider buy?" value={f.errand_details} onChangeText={set("errand_details")} multiline maxLength={2000} placeholder="e.g. 2 plates of jollof rice with chicken, 1 bottle of Coke" />
-            <Input label="Estimated cost of the items (₦)" value={f.errand_budget} onChangeText={(v) => set("errand_budget")(v.replace(/\D/g, ""))} keyboardType="number-pad" />
-            <Notice kind="warning">You pay for the items directly to the rider on delivery (cash or transfer). Only the delivery fee is paid in the app.</Notice>
+            <Input label="What should the rider collect?" value={f.item_description} onChangeText={set("item_description")} maxLength={255} placeholder="e.g. 2 plates of jollof rice with chicken, 1 bottle of Coke" />
+            <Input label="Order number or name on the order (optional)" value={f.errand_details} onChangeText={set("errand_details")} maxLength={200} placeholder="e.g. Order #A102, under the name Tunde" />
+            <Pressable onPress={() => setOrderPaid((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: orderPaid }}
+              style={{ flexDirection: "row", gap: 10, alignItems: "flex-start", padding: 12, borderRadius: radius.md, backgroundColor: colors.warningBg }}>
+              <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 1.5, borderColor: orderPaid ? colors.brand500 : colors.warning, backgroundColor: orderPaid ? colors.brand500 : colors.white, alignItems: "center", justifyContent: "center", marginTop: 1 }}>
+                {orderPaid ? <Check size={15} color={colors.white} /> : null}
+              </View>
+              <Text variant="small" color={colors.warning} style={{ flex: 1 }}>I have already ordered and <Text variant="small" color={colors.warning} style={{ fontFamily: fonts.semibold }}>paid the vendor</Text> for this order. The rider only picks it up and delivers it — riders don’t buy items or pay vendors.</Text>
+            </Pressable>
           </>
         ) : (
           <Input label="What are we delivering?" value={f.item_description} onChangeText={set("item_description")} maxLength={255} placeholder="e.g. Documents in an envelope" />

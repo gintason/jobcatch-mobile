@@ -36,3 +36,18 @@ export async function pickProfilePhoto(): Promise<PickedFile | null> {
   const a = r.assets[0];
   return { uri: a.uri, name: a.fileName ?? "photo.jpg", type: a.mimeType ?? "image/jpeg" };
 }
+
+/**
+ * Pick one video from the library (work samples). The backend accepts MP4 only:
+ * on iPhone we ask for the "compatible" (H.264) version and name it .mp4.
+ */
+export async function pickVideo(): Promise<PickedFile | null> {
+  const r = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ["videos"], allowsMultipleSelection: false, quality: 0.8, videoMaxDuration: 120,
+    preferredAssetRepresentationMode: ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
+  });
+  if (r.canceled || !r.assets?.[0]) return null;
+  const a = r.assets[0];
+  const base = (a.fileName ?? "work-sample").replace(/\.[^.]+$/, "");
+  return { uri: a.uri, name: `${base}.mp4`, type: "video/mp4" };
+}

@@ -200,9 +200,10 @@ function ActiveJob({ job }: { job: Delivery }) {
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
         <Text variant="h2">Current delivery</Text><Badge label={job.status_label} status={job.status} />
       </View>
-      <Stop label={job.kind === "errand" ? "Buy from" : "Pick up"} address={job.pickup_address} sub={job.pickup_contact_name ? `${job.pickup_contact_name} · ${job.pickup_contact_phone}` : ""} onGo={() => openDirections(job.pickup)} />
+      <Stop label={job.kind === "errand" ? "Collect paid order from" : "Pick up"} address={job.pickup_address} sub={job.pickup_contact_name ? `${job.pickup_contact_name} · ${job.pickup_contact_phone}` : ""} onGo={() => openDirections(job.pickup)} />
       <Stop label="Deliver to" address={job.dropoff_address} sub={`${job.recipient_name} · ${job.recipient_phone}`} onGo={() => openDirections(job.dropoff)} />
-      <Text variant="small">{job.errand_details || job.item_description}{job.errand_budget ? ` (≈ ${naira(job.errand_budget)} — the customer pays you for the items on delivery)` : ""}</Text>
+      <Text variant="small">{job.item_description}{job.errand_details ? ` · ${job.errand_details}` : ""}</Text>
+      {job.kind === "errand" ? <Notice kind="warning">This order is already paid for by the customer. Don’t pay the vendor — just collect it and deliver.</Notice> : null}
       {job.notes ? <Text variant="small">Note: {job.notes}</Text> : null}
       {job.customer_phone ? <Button title={`Call ${job.customer_name}`} kind="secondary" size="md" icon={<Phone size={16} color={colors.brand600} />} onPress={() => call(job.customer_phone!)} /> : null}
       {error ? <Notice kind="error">{error}</Notice> : null}

@@ -77,10 +77,9 @@ export default function DeliveryDetail() {
       </Card>
 
       <Card style={{ gap: 12 }}>
-        <Field label={d.kind === "errand" ? "Buy from" : "Pickup"} value={d.pickup_address} />
+        <Field label={d.kind === "errand" ? "Collect from" : "Pickup"} value={`${d.pickup_address}${d.pickup_contact_name ? `\n${d.pickup_contact_name}${d.pickup_contact_phone ? ` · ${d.pickup_contact_phone}` : ""}` : ""}`} />
         <Field label="Drop-off" value={`${d.dropoff_address}\n${d.recipient_name} · ${d.recipient_phone}`} />
-        <Field label={d.kind === "errand" ? "Shopping list" : "Item"} value={d.errand_details || d.item_description} />
-        {d.errand_budget ? <Field label="Items (pay the rider on delivery)" value={`≈ ${naira(d.errand_budget)}`} /> : null}
+        <Field label={d.kind === "errand" ? "Order to collect (already paid)" : "Item"} value={`${d.item_description}${d.errand_details ? ` · ${d.errand_details}` : ""}`} />
         <Field label="Distance" value={`${d.distance_km} km`} />
         <Field label="Booked" value={formatDateTime(d.created_at)} />
       </Card>

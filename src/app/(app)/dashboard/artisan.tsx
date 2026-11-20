@@ -2,27 +2,28 @@ import { useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams } from "expo-router";
-import { BadgeCheck, CheckCircle2, Circle, FileText, ImagePlus, LocateFixed, Star, Trash2, Wrench } from "lucide-react-native";
+import { BadgeCheck, CheckCircle2, Circle, FileText, ImagePlus, LocateFixed, Star, Trash2, Video, Wrench } from "lucide-react-native";
+import { UpgradePrompts, VisibilityPlans } from "@/components/UpgradePrompts";
 import { BookingList, ConversationList, DashTabs, FilePick, KV, RoleGate, SwitchRole, Toggle, confirm } from "@/components/dashboard";
 import { apiError, type PickedFile } from "@/lib/api";
 import { useEnsureRole } from "@/lib/auth";
-import { openCheckout } from "@/lib/checkout";
+import { openCheckout, openLink } from "@/lib/checkout";
 import { mediaUrl } from "@/lib/config";
-import { pickDocument, pickImages, takeSelfie } from "@/lib/files";
+import { pickDocument, pickImages, pickVideo, takeSelfie } from "@/lib/files";
 import { formatDate, naira } from "@/lib/format";
 import { useCategories, useMyBookings } from "@/lib/jobs";
 import { currentPlace } from "@/lib/location";
 import {
   useArtisanVerification, useCreateService, useDeleteArtisanDoc, useDeletePortfolio, useDeleteService, useMyServices, usePortfolio,
-  useRoleProfile, useSaveArtisanVerification, useSaveRoleProfile, useSubmitArtisanVerification, useUploadArtisanDoc, useUploadPortfolio,
+  useDeleteJobVideo, useJobVideos, useRoleProfile, useSaveArtisanVerification, useUploadJobVideo, useSaveRoleProfile, useSubmitArtisanVerification, useUploadArtisanDoc, useUploadPortfolio,
   type ArtisanProfile, type ArtisanVerification,
 } from "@/lib/roles";
 import { Badge, Button, Card, Empty, Input, Loading, MultiSelect, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
 
 type Tab = "profile" | "services" | "portfolio" | "bookings" | "messages" | "verification";
 const TABS: { id: Tab; label: string }[] = [
-  { id: "profile", label: "Profile" }, { id: "services", label: "My services" }, { id: "portfolio", label: "Portfolio" },
-  { id: "bookings", label: "Bookings" }, { id: "messages", label: "Messages" }, { id: "verification", label: "Get verified" },
+  { id: "profile", label: "Profile" }, { id: "services", label: "Services" }, { id: "portfolio", label: "Portfolio" },
+  { id: "bookings", label: "Bookings" }, { id: "messages", label: "Send a message to the Customer" }, { id: "verification", label: "Verification" },
 ];
 
 /** Artisan dashboard — mirrors /dashboard/artisan on the web. */
@@ -32,6 +33,7 @@ export default function ArtisanDashboard() {
   const ready = useEnsureRole("artisan");
   const profile = useRoleProfile<ArtisanProfile>("artisan", ready);
   const p = profile.data;
+  const [plan, setPlan] = useState<"pro" | "premium" | null>(null);
 
   return (
     <Screen back title="Artisan" subtitle="Offer your services and get hired" right={<SwitchRole />}
@@ -44,8 +46,16 @@ export default function ArtisanDashboard() {
             <Stat icon={<BadgeCheck size={16} color={p.is_work_verified ? colors.brand500 : colors.faint} />} value={p.is_work_verified ? "Verified" : "Not yet"} label="Verification" />
           </View>
         ) : null}
+        <UpgradePrompts audience="artisan"
+          onTab={(t) => { if (TABS.some((x) => x.id === t)) setTab(t as Tab); }}
+          onPlan={(pl) => { setPlan(pl); setTab("profile"); }} />
         <DashTabs value={tab} onChange={setTab} tabs={TABS} />
-        {tab === "profile" ? (profile.isLoading ? <Loading /> : p ? <ProfilePanel p={p} /> : <Notice kind="error">{apiError(profile.error, "Could not load your profile.")}</Notice>) : null}
+        {tab === "profile" ? (profile.isLoading ? <Loading /> : p ? (
+          <View style={{ gap: 14 }}>
+            <ProfilePanel p={p} />
+            <VisibilityPlans highlight={plan} />
+          </View>
+        ) : <Notice kind="error">{apiError(profile.error, "Could not load your profile.")}</Notice>) : null}
         {tab === "services" ? <ServicesPanel /> : null}
         {tab === "portfolio" ? <PortfolioPanel /> : null}
         {tab === "bookings" ? <ArtisanBookings /> : null}
@@ -215,6 +225,47 @@ function ArtisanBookings() {
   return <BookingList role="artisan" bookings={list.data} loading={list.isLoading} />;
 }
 
+// ---------------------------------------------------------------- work-sample videos (optional)
+function JobVideos() {
+  const videos = useJobVideos();
+  const upload = useUploadJobVideo();
+  const del = useDeleteJobVideo();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [file, setFile] = useState<PickedFile | null>(null);
+  const [error, setError] = useState("");
+  return (
+    <Card style={{ gap: 12 }}>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Video size={20} color={colors.brand500} /><Text variant="h3">Work sample videos</Text><Text variant="caption">(optional)</Text>
+      </View>
+      <Text variant="small">Short videos of jobs you’ve done help our team verify your work and win customers’ trust. MP4, up to 100 MB.</Text>
+      <Input label="Title" value={title} onChangeText={setTitle} maxLength={150} placeholder="e.g. Kitchen sink installation, Lekki" />
+      <Input label="Description (optional)" value={description} onChangeText={setDescription} multiline maxLength={1000} />
+      <FilePick file={file} label="Choose a video" onPick={async () => { const f = await pickVideo(); if (f) setFile(f); return f; }} />
+      {error ? <Notice kind="error">{error}</Notice> : null}
+      <Button title="Upload video" kind="secondary" loading={upload.isPending} disabled={!file || !title.trim()}
+        onPress={() => { setError(""); upload.mutate({ title: title.trim(), description: description.trim(), video: file! }, {
+          onSuccess: () => { setTitle(""); setDescription(""); setFile(null); },
+          onError: (e) => setError(apiError(e, "Could not upload the video.")),
+        }); }} />
+      {videos.data?.map((v) => (
+        <View key={v.id} style={s.docRow}>
+          <Video size={18} color={colors.brand600} />
+          <Pressable style={{ flex: 1 }} onPress={() => openLink(mediaUrl(v.video))}>
+            <Text variant="bodyStrong" style={{ fontSize: 14 }} numberOfLines={1}>{v.title}</Text>
+            <Text variant="caption" numberOfLines={2}>{formatDate(v.created_at)}{v.review_note ? ` · ${v.review_note}` : ""}</Text>
+          </Pressable>
+          <Badge label={v.status} status={v.status === "approved" ? "approved" : v.status} />
+          <Pressable hitSlop={10} accessibilityLabel={`Delete ${v.title}`} onPress={() => confirm("Delete video?", v.title, "Delete", () => del.mutate(v.id), true)}>
+            <Trash2 size={17} color={colors.danger} />
+          </Pressable>
+        </View>
+      ))}
+    </Card>
+  );
+}
+
 // ---------------------------------------------------------------- verification
 const ID_TYPES = [
   { value: "nin", label: "National ID (NIN)" }, { value: "voters_card", label: "Voter’s card" },
@@ -260,6 +311,7 @@ function VerificationPanel() {
           <SubmitCard app={app} />
         </>
       ) : null}
+      <JobVideos />
     </View>
   );
 }

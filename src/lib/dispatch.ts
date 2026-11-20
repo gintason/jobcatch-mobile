@@ -46,7 +46,7 @@ export interface BookingInput {
   kind: DeliveryKind; vehicle_type: VehicleType;
   pickup_lat: number; pickup_lng: number; pickup_address: string; pickup_contact_name?: string; pickup_contact_phone?: string;
   dropoff_lat: number; dropoff_lng: number; dropoff_address: string; recipient_name: string; recipient_phone: string;
-  item_description: string; errand_details?: string; errand_budget?: string; notes?: string;
+  item_description: string; errand_details?: string; order_paid?: boolean; notes?: string;
 }
 
 export function useRates() {

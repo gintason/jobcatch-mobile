@@ -302,3 +302,48 @@ export function useSendMessage(id?: string) {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["messages", id] }),
   });
 }
+
+// ================================================================ upgrade prompts (managed in Django admin)
+export interface UpgradePrompt { key: string; style: "modal" | "banner"; title: string; body: string; highlights: string[]; cta_label: string; cta_url: string }
+export function usePrompts(audience: "job_seeker" | "artisan" | "employer", enabled = true) {
+  return useQuery({ queryKey: ["prompts", audience], queryFn: () => api.get<UpgradePrompt[]>("/engagement/prompts/", { audience }), enabled, staleTime: 5 * 60_000 });
+}
+export function trackPrompt(key: string, event: "seen" | "dismiss" | "click") {
+  api.post(`/engagement/prompts/${key}/${event}/`, {}).catch(() => undefined);
+}
+
+// ================================================================ artisan visibility plans (Pro / Premium)
+export interface Subscription { id: string; plan: "free" | "pro" | "premium"; is_active: boolean; started_at: string; expires_at: string | null }
+export const PLANS = {
+  pro: { label: "Pro", price: 2500, blurb: "Boosted placement in search." },
+  premium: { label: "Premium", price: 5000, blurb: "Top placement everywhere and on the home page." },
+} as const;
+export function useMySubscriptions(enabled = true) {
+  return useQuery({ queryKey: ["subscriptions"], queryFn: async () => results<Subscription>(await api.get("/subscriptions/")), enabled });
+}
+export function startSubscription(plan: "pro" | "premium") {
+  return api.post<{ authorization_url: string; reference: string }>("/payments/initialize/", { purpose: "subscription", plan });
+}
+
+// ================================================================ artisan work-sample videos (optional, reviewed by admin)
+export interface JobVideo { id: string; video: string; title: string; description: string; status: "pending" | "approved" | "rejected"; review_note: string; created_at: string }
+export function useJobVideos(enabled = true) {
+  return useQuery({ queryKey: ["job-videos"], queryFn: async () => results<JobVideo>(await api.get("/artisan/job-videos/")), enabled });
+}
+export function useUploadJobVideo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { title: string; description: string; video: PickedFile }) => {
+      const fd = new FormData();
+      fd.append("title", p.title);
+      fd.append("description", p.description);
+      appendFile(fd, "video", p.video);
+      return api.upload("POST", "/artisan/job-videos/", fd);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["job-videos"] }),
+  });
+}
+export function useDeleteJobVideo() {
+  const qc = useQueryClient();
+  return useMutation({ mutationFn: (id: string) => api.delete(`/artisan/job-videos/${id}/`), onSuccess: () => qc.invalidateQueries({ queryKey: ["job-videos"] }) });
+}

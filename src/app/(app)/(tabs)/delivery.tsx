@@ -18,7 +18,7 @@ export default function DeliveryTab() {
         <Text style={{ color: colors.white, fontFamily: fonts.display, fontSize: 22, lineHeight: 28, marginTop: 4 }}>What are we moving today?</Text>
         <View style={{ flexDirection: "row", gap: 10, marginTop: 16 }}>
           <Choice icon={Package} title="Send a package" body="Docs, parcels, boxes" onPress={() => router.push("/delivery/new?kind=package")} />
-          <Choice icon={UtensilsCrossed} title="Food & errands" body="We buy and bring it" onPress={() => router.push("/delivery/new?kind=errand")} />
+          <Choice icon={UtensilsCrossed} title="Food & essentials" body="We collect your paid order" onPress={() => router.push("/delivery/new?kind=errand")} />
         </View>
       </LinearGradient>
 

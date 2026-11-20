@@ -80,6 +80,32 @@ export function useBrowseArtisans(params: { q?: string; category?: string }) {
   });
   return { ...q, artisans: q.data?.pages.flatMap((p) => p.results) ?? [], total: q.data?.pages[0]?.count ?? 0 };
 }
+/** Available artisans near a point, nearest first (same as the web's "Artisans near me"). */
+export interface MatchedArtisan {
+  artisan_id: string; user_id: string; full_name: string; latitude: number | null; longitude: number | null;
+  tier: string | null; avg_rating: string; rating_count: number; is_featured: boolean; is_work_verified: boolean;
+  distance_km: number; services: { id: string; title: string; base_price: string }[];
+}
+export function useNearbyArtisans(coords: { lat: number; lng: number } | null, radiusKm: number) {
+  return useQuery({
+    queryKey: ["nearby-artisans", coords, radiusKm],
+    queryFn: () => api.get<MatchedArtisan[]>("/matching/artisans/", { latitude: coords!.lat, longitude: coords!.lng, radius_km: radiusKm }),
+    enabled: !!coords,
+  });
+}
+
+/** Report an artisan to the JobCatch team (the web's Complaints form, category "artisan"). */
+export function useReportArtisan() {
+  return useMutation({
+    mutationFn: (p: { artisan: string; artisan_name: string; full_name: string; email: string; phone: string; subject: string; description: string }) => {
+      const fd = new FormData();
+      fd.append("category", "artisan");
+      Object.entries(p).forEach(([k, v]) => { if (v) fd.append(k, v); });
+      return api.upload<{ reference: string }>("POST", "/complaints/", fd);
+    },
+  });
+}
+
 export function useArtisan(id?: string) {
   return useQuery({ queryKey: ["artisan", id], queryFn: () => api.get<ArtisanDetail>(`/public/artisans/${id}/`), enabled: !!id });
 }

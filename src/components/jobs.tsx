@@ -1,7 +1,7 @@
 import { Pressable, View } from "react-native";
 import { router } from "expo-router";
 import { Image } from "expo-image";
-import { BadgeCheck, Building2, Star } from "lucide-react-native";
+import { BadgeCheck, Building2, Crown, Star, Zap } from "lucide-react-native";
 import { mediaUrl } from "@/lib/config";
 import { initials, naira, timeAgo } from "@/lib/format";
 import type { PublicArtisan, PublicJob } from "@/lib/jobs";
@@ -52,6 +52,19 @@ export function Avatar({ uri, name, size = 52 }: { uri?: string | null; name: st
   );
 }
 
+/** Paid-tier badge (Pro / Premium) — separate from the blue Verified check, like the web. */
+export function TierBadge({ tier }: { tier?: string | null }) {
+  if (tier !== "premium" && tier !== "pro") return null;
+  const premium = tier === "premium";
+  const Icon = premium ? Crown : Zap;
+  return (
+    <View style={{ flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: premium ? colors.amber : colors.brand100 }}>
+      <Icon size={11} color={premium ? colors.brand900 : colors.brand700} />
+      <Text style={{ fontSize: 11, fontFamily: fonts.displayBold, color: premium ? colors.brand900 : colors.brand700 }}>{premium ? "Premium" : "Pro"}</Text>
+    </View>
+  );
+}
+
 export function ArtisanCard({ a, wide }: { a: PublicArtisan; wide?: boolean }) {
   return (
     <Pressable onPress={() => router.push(`/artisans/${a.id}`)} style={({ pressed }) => [{
@@ -62,6 +75,7 @@ export function ArtisanCard({ a, wide }: { a: PublicArtisan; wide?: boolean }) {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
           <Text variant="h3" numberOfLines={1} style={{ flexShrink: 1 }}>{a.full_name}</Text>
           {a.is_verified ? <BadgeCheck size={15} color={colors.brand500} /> : null}
+          <TierBadge tier={a.tier} />
         </View>
         <Text variant="small" numberOfLines={1}>{a.trade || "Artisan"}</Text>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 4 }}>
