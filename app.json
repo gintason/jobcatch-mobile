@@ -72,6 +72,14 @@
         "projectId": "20ea4483-c1e7-449c-b8ad-68ceedbdc785"
       }
     },
-    "description": "JobCatch — pay bills, send packages, hire trusted artisans and find verified jobs in Nigeria."
+    "description": "JobCatch — pay bills, send packages, hire trusted artisans and find verified jobs in Nigeria.",
+    "runtimeVersion": {
+      "policy": "fingerprint"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/20ea4483-c1e7-449c-b8ad-68ceedbdc785",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    }
   }
 }
