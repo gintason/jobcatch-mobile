@@ -19,6 +19,7 @@ import {
 } from "@/lib/roles";
 import { Badge, Button, Card, Empty, Input, Loading, MultiSelect, Notice, Screen, Select, Text, colors, fonts, radius } from "@/ui";
 import { ReferralNotice, TELL_EMPLOYER } from "@/components/ReferralNotice";
+import { SearchButton } from "@/components/SearchButton";
 
 type Tab = "find" | "applications" | "cvs" | "alerts" | "messages" | "cvservice";
 const IDS: Tab[] = ["find", "applications", "cvs", "alerts", "messages", "cvservice"];
@@ -58,6 +59,7 @@ function FindJobs() {
   return (
     <View style={{ gap: 12 }}>
       <Input value={q} onChangeText={setQ} placeholder="Search job title or company" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())}
+              right={<SearchButton onPress={() => setQuery(q.trim())} />}
         left={<Search size={18} color={colors.faint} />} />
       <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
       <ReferralNotice message={TELL_EMPLOYER} />

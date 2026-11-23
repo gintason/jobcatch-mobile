@@ -6,6 +6,7 @@ import { ArtisanCard, TierBadge } from "@/components/jobs";
 import { useBrowseArtisans, useCategories, useNearbyArtisans, type MatchedArtisan } from "@/lib/jobs";
 import { currentPlace } from "@/lib/location";
 import { Button, Card, Chips, Empty, Input, Loading, Select, Text, colors, Screen } from "@/ui";
+import { SearchButton } from "@/components/SearchButton";
 
 const RADII = ["5", "10", "20", "50"] as const;
 
@@ -39,7 +40,8 @@ export default function Artisans() {
         onEndReached={() => list.hasNextPage && !list.isFetchingNextPage && list.fetchNextPage()} onEndReachedThreshold={0.4}
         ListHeaderComponent={
           <View style={{ gap: 12, marginBottom: 4 }}>
-            <Input value={q} onChangeText={setQ} placeholder="Search by name or service…" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())} left={<Search size={18} color={colors.faint} />} />
+            <Input value={q} onChangeText={setQ} placeholder="Search by name or service…" returnKeyType="search" onSubmitEditing={() => setQuery(q.trim())}
+              right={<SearchButton onPress={() => setQuery(q.trim())} />} left={<Search size={18} color={colors.faint} />} />
             <Select value={category} onChange={setCategory} loading={cats.isLoading} placeholder="All categories" options={[{ value: "", label: "All categories" }, ...(cats.data ?? []).map((c) => ({ value: c.id, label: c.name }))]} />
 
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>

@@ -12,7 +12,7 @@ export function Input({ label, hint, error, left, right, password, style, multil
         {label ? <Text variant="label">{label}</Text> : null}
         <View style={[s.box, multiline && { minHeight: 96, alignItems: "flex-start", paddingVertical: 10 },
           focus && { borderColor: colors.brand400, backgroundColor: colors.white }, !!error && { borderColor: colors.danger }]}>
-          {left}
+          {left ? <View style={s.side}>{left}</View> : null}
           <TextInput
             placeholderTextColor={colors.faint} multiline={multiline}
             secureTextEntry={password ? hidden : undefined}
@@ -22,7 +22,7 @@ export function Input({ label, hint, error, left, right, password, style, multil
             <Pressable hitSlop={10} onPress={() => setHidden(!hidden)} accessibilityLabel={hidden ? "Show password" : "Hide password"}>
               {hidden ? <Eye size={20} color={colors.faint} /> : <EyeOff size={20} color={colors.faint} />}
             </Pressable>
-          ) : right}
+          ) : right ? <View style={s.side}>{right}</View> : null}
         </View>
         {error ? <Text variant="small" color={colors.danger}>{error}</Text> : hint ? <Text variant="caption">{hint}</Text> : null}
       </View>
@@ -31,5 +31,6 @@ export function Input({ label, hint, error, left, right, password, style, multil
 
 const s = StyleSheet.create({
   box: { minHeight: 52, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.mist, flexDirection: "row", alignItems: "center", paddingHorizontal: 14, gap: 10 },
-  input: { flex: 1, fontFamily: fonts.regular, fontSize: 15.5, color: colors.ink, paddingVertical: 12 },
+  side: { flexShrink: 0 },
+  input: { flex: 1, minWidth: 0, fontFamily: fonts.regular, fontSize: 15.5, color: colors.ink, paddingVertical: 12 },
 });
