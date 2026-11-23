@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { View } from "react-native";
-import { useLocalSearchParams } from "expo-router";
 import { Wallet as WalletIcon } from "lucide-react-native";
 import { TxnIcon, WalletCard } from "@/components/bills";
 import { apiError } from "@/lib/api";
@@ -10,10 +9,10 @@ import { formatDateTime, naira } from "@/lib/format";
 import { Button, Card, Chips, Empty, Input, Loading, Notice, Screen, Section, Text, colors } from "@/ui";
 
 export default function WalletScreen() {
-  const { fund } = useLocalSearchParams<{ fund?: string }>();
   const wallet = useWallet();
   const top = useFundWallet();
-  const [amount, setAmount] = useState(fund ? "5000" : "");
+  // Start empty: a pre-filled amount was being mistaken for the wallet balance.
+  const [amount, setAmount] = useState("");
   const [error, setError] = useState("");
 
   function topUp() {

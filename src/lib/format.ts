@@ -24,10 +24,17 @@ export function timeAgo(iso?: string | null) {
   if (d < 7) return `${d}d ago`;
   return formatDate(iso);
 }
+/**
+ * ₦ amount with thousands separators, e.g. naira("1234.5", 2) → "₦1,234.50".
+ * Formatted by hand (not toLocaleString) so every phone shows exactly the same
+ * thing regardless of the device's language/region or JS engine Intl support.
+ */
 export function naira(value: string | number | null | undefined, decimals = 0) {
-  const n = typeof value === "string" ? Number(value) : value ?? 0;
+  const n = typeof value === "string" ? Number(value.replace(/,/g, "")) : value ?? 0;
   const v = Number.isFinite(n) ? (n as number) : 0;
-  return `₦${v.toLocaleString("en-NG", { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}`;
+  const [whole, frac] = Math.abs(v).toFixed(decimals).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return `${v < 0 ? "-" : ""}₦${grouped}${frac ? `.${frac}` : ""}`;
 }
 export function firstName(full?: string | null) { return (full ?? "").trim().split(/\s+/)[0] || "there"; }
 export function initials(full?: string | null) {
