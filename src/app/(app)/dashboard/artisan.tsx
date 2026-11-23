@@ -3,6 +3,7 @@ import { Alert, Pressable, StyleSheet, View } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams } from "expo-router";
 import { BadgeCheck, CheckCircle2, Circle, FileText, ImagePlus, LocateFixed, Star, Trash2, Video, Wrench } from "lucide-react-native";
+import { PhotoGrid } from "@/components/PhotoGrid";
 import { UpgradePrompts, VisibilityPlans } from "@/components/UpgradePrompts";
 import { BookingList, ConversationList, DashTabs, FilePick, KV, RoleGate, SwitchRole, Toggle, confirm } from "@/components/dashboard";
 import { apiError, type PickedFile } from "@/lib/api";
@@ -202,19 +203,14 @@ function PortfolioPanel() {
           onPress={() => { setError(""); upload.mutate({ image: image!, caption: caption.trim() }, { onSuccess: () => { setImage(null); setCaption(""); }, onError: (e) => setError(apiError(e, "Upload failed.")) }); }} />
       </Card>
       {items.isLoading ? <Loading rows={2} /> : items.data?.length ? (
-        <View style={s.grid}>
-          {items.data.map((it) => (
-            <View key={it.id} style={s.tile}>
-              <Image source={{ uri: mediaUrl(it.image) }} style={{ width: "100%", aspectRatio: 1, borderRadius: radius.md, backgroundColor: colors.brand50 }} contentFit="cover" />
-              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-                <Text variant="caption" numberOfLines={1} style={{ flex: 1 }}>{it.caption || formatDate(it.created_at)}</Text>
-                <Pressable hitSlop={10} accessibilityLabel="Delete photo" onPress={() => confirm("Delete photo?", it.caption || "This photo will be removed.", "Delete", () => del.mutate(it.id), true)}>
-                  <Trash2 size={16} color={colors.danger} />
-                </Pressable>
-              </View>
-            </View>
-          ))}
-        </View>
+        <PhotoGrid photos={items.data} footer={(it) => (
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+            <Text variant="caption" numberOfLines={1} style={{ flex: 1 }}>{it.caption || "No caption"}</Text>
+            <Pressable hitSlop={10} accessibilityLabel="Delete photo" onPress={() => confirm("Delete photo?", it.caption || "This photo will be removed.", "Delete", () => del.mutate(it.id), true)}>
+              <Trash2 size={16} color={colors.danger} />
+            </Pressable>
+          </View>
+        )} />
       ) : <Empty icon={<ImagePlus size={26} color={colors.brand500} />} title="No photos yet" body="Upload pictures of jobs you've done." />}
     </View>
   );
@@ -419,7 +415,5 @@ const s = StyleSheet.create({
   stat: { flex: 1, backgroundColor: colors.white, borderRadius: radius.md, padding: 12, gap: 2, borderWidth: 1, borderColor: colors.line },
   svcIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: colors.brand50, alignItems: "center", justifyContent: "center" },
   pick: { minHeight: 120, borderRadius: radius.md, borderWidth: 1.5, borderStyle: "dashed", borderColor: colors.brand200, alignItems: "center", justifyContent: "center", gap: 6, overflow: "hidden" },
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-  tile: { width: "47%", flexGrow: 1, gap: 6, backgroundColor: colors.white, padding: 8, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line },
   docRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: colors.line },
 });

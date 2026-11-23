@@ -1,15 +1,14 @@
 import { useMemo, useState } from "react";
 import { Modal, Pressable, ScrollView, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { BadgeCheck, CheckCircle2, Flag, MapPin, Phone, Star, X } from "lucide-react-native";
 import { AddressField, call } from "@/components/delivery";
 import { Avatar, TierBadge } from "@/components/jobs";
+import { PhotoGrid } from "@/components/PhotoGrid";
 import { ReferralNotice, TELL_ARTISAN } from "@/components/ReferralNotice";
 import { useAuth, useEnsureRole } from "@/lib/auth";
 import { apiError } from "@/lib/api";
-import { mediaUrl } from "@/lib/config";
 import type { LatLng } from "@/lib/dispatch";
 import { formatDate, naira } from "@/lib/format";
 import { useArtisan, useCreateBooking, useReportArtisan, type ArtisanDetail } from "@/lib/jobs";
@@ -81,12 +80,7 @@ export default function ArtisanProfile() {
 
       {a.portfolio.length ? (
         <Section title="Portfolio">
-          <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-            {a.portfolio.map((p) => (
-              <Image key={p.id} source={{ uri: mediaUrl(p.image) }} accessibilityLabel={p.caption}
-                style={{ width: "48%", flexGrow: 1, aspectRatio: 1, borderRadius: radius.lg, backgroundColor: colors.brand50 }} contentFit="cover" />
-            ))}
-          </View>
+          <PhotoGrid photos={a.portfolio} />
         </Section>
       ) : null}
 
